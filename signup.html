@@ -13,8 +13,11 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
+<!-- reCAPTCHA v3 -->
+<script src="https://www.google.com/recaptcha/api.js?render=6LeF7D4sAAAAAGeQx7guD8qCDngXBUZKrnahk1gC"></script>
+
 <style>
-*{margin:0;padding:0;box-sizing:border-box;}
+*{margin:0;padding:0;box-sizing:border-box}
 body{
   min-height:100vh;
   background:linear-gradient(180deg,#000,#050505,#000);
@@ -24,68 +27,38 @@ body{
   align-items:center;
   justify-content:center;
 }
-.container{
-  width:100%;
-  max-width:420px;
-  padding:25px;
-  animation:fadeUp .8s ease;
-}
-@keyframes fadeUp{
-  from{opacity:0;transform:translateY(30px);}
-  to{opacity:1;transform:translateY(0);}
-}
-.logo{text-align:center;margin-bottom:15px;}
+.container{max-width:420px;width:100%;padding:24px}
+.logo{text-align:center;margin-bottom:15px}
 .logo img{
   width:80px;height:80px;border-radius:50%;
-  border:2px solid #00f7ff;
-  box-shadow:0 0 15px rgba(0,247,255,.5);
+  border:2px solid #00f7ff;box-shadow:0 0 15px rgba(0,247,255,.6)
 }
-.brand{text-align:center;margin-bottom:18px;}
-.brand h1{font-family:'Orbitron';font-size:22px;letter-spacing:2px;}
-.brand p{font-size:11px;letter-spacing:4px;color:#00f7ff;margin-top:5px;}
+.brand{text-align:center;margin-bottom:18px}
+.brand h1{font-family:'Orbitron',sans-serif;font-size:22px}
+.brand p{font-size:11px;letter-spacing:3px;color:#00f7ff}
 .card{
-  background:rgba(255,255,255,.04);
-  border-radius:16px;
-  padding:24px;
-  backdrop-filter:blur(16px);
-  box-shadow:0 15px 40px rgba(0,0,0,.7);
+  background:rgba(255,255,255,.05);
+  border-radius:16px;padding:22px;
+  backdrop-filter:blur(14px)
 }
-.input{margin-bottom:13px;}
+.input{margin-bottom:12px}
 .input input{
-  width:100%;
-  padding:12px 14px;
-  background:rgba(0,0,0,.7);
-  border:1px solid rgba(255,255,255,.15);
-  border-radius:10px;
-  color:#fff;
-  outline:none;
+  width:100%;padding:12px;border-radius:10px;
+  background:#000;border:1px solid #333;color:#fff
 }
 .btn{
-  width:100%;
-  padding:12px;
-  border:none;
-  border-radius:12px;
+  width:100%;padding:12px;border:none;border-radius:12px;
   background:linear-gradient(135deg,#00f7ff,#7a00ff);
-  color:#000;
-  font-weight:600;
-  cursor:pointer;
-  margin-top:6px;
+  font-weight:600;cursor:pointer;margin-top:6px
 }
-.note{text-align:center;font-size:12px;opacity:.7;margin-top:10px;}
-.help-btn{
-  margin-top:12px;width:100%;padding:10px;
-  background:rgba(255,255,255,.08);
-  border:1px solid rgba(255,255,255,.15);
-  border-radius:12px;color:#fff;cursor:pointer;
-}
-#otpBox{display:none;}
+.note{font-size:12px;opacity:.7;text-align:center;margin-top:10px}
+#otpBox{display:none}
 </style>
 </head>
 
 <body>
 
 <div class="container">
-
   <div class="logo">
     <img src="logo.png">
   </div>
@@ -99,10 +72,10 @@ body{
 
     <div class="input"><input id="name" placeholder="Full Name"></div>
     <div class="input"><input id="username" placeholder="Username"></div>
-    <div class="input"><input type="password" id="password" placeholder="Password"></div>
-    <div class="input"><input type="password" id="confirm" placeholder="Confirm Password"></div>
+    <div class="input"><input id="password" type="password" placeholder="Password"></div>
+    <div class="input"><input id="confirm" type="password" placeholder="Confirm Password"></div>
     <div class="input"><input id="referral" placeholder="Referral Code (Optional)"></div>
-    <div class="input"><input type="tel" id="phone" placeholder="Mobile Number"></div>
+    <div class="input"><input id="phone" placeholder="Mobile Number"></div>
 
     <div id="recaptcha-container"></div>
 
@@ -113,112 +86,75 @@ body{
       <button class="btn" onclick="verifyOTP()">VERIFY & CREATE ACCOUNT</button>
     </div>
 
-    <button class="help-btn" onclick="openHelp()">❓ How to Create Account?</button>
-
-    <div class="note">Referral optional hai. Na bharo tab bhi account ban jaayega.</div>
-
+    <div class="note">Referral optional hai. Na bharo tab bhi account banega.</div>
   </div>
 </div>
 
 <script>
-/* ================= FIREBASE CONFIG ================= */
-const firebaseConfig = {
-  apiKey: "AIzaSyD9AuI0WpI8mT6GNd8ayvgAjnc4oPznbOI",
-  authDomain: "riteek-x-official.firebaseapp.com",
-  projectId: "riteek-x-official",
-  storageBucket: "riteek-x-official.appspot.com",
-  messagingSenderId: "1009762184094",
-  appId: "1:1009762184094:web:d0a01b58c8f51bfe50048f"
-};
-
+// 🔴 Firebase config yahan same paste karo
 firebase.initializeApp(firebaseConfig);
+
 const auth = firebase.auth();
 const db = firebase.firestore();
-
 let confirmationResult;
 
-/* reCAPTCHA */
+// reCAPTCHA (FINAL FIX)
 window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier(
   'recaptcha-container',
-  { size:'invisible' }
+  { size: 'invisible' }
 );
 
-/* ================= SEND OTP ================= */
+// SEND OTP
 function sendOTP(){
   const phone = document.getElementById("phone").value.trim();
   if(phone.length !== 10){
-    alert("Enter valid mobile number");
+    alert("Valid mobile number dalo");
     return;
   }
 
   auth.signInWithPhoneNumber("+91"+phone, window.recaptchaVerifier)
-  .then(result=>{
-    confirmationResult = result;
-    document.getElementById("otpBox").style.display="block";
-    alert("OTP Sent");
-  })
-  .catch(err=>{
-    alert("OTP Error");
-    console.error(err);
-  });
+    .then(result=>{
+      confirmationResult = result;
+      document.getElementById("otpBox").style.display="block";
+      alert("OTP Sent Successfully");
+    })
+    .catch(err=>{
+      alert(err.message);
+      console.error(err);
+    });
 }
 
-/* ================= VERIFY OTP & CREATE ================= */
+// VERIFY OTP
 function verifyOTP(){
   const otp = document.getElementById("otp").value.trim();
-  if(!otp){ alert("Enter OTP"); return; }
+  if(!otp){ alert("OTP dalo"); return; }
 
   confirmationResult.confirm(otp)
-  .then(()=>createAccount())
-  .catch(()=>alert("Wrong OTP"));
-}
+    .then(()=>{
+      const name = nameEl.value = document.getElementById("name").value.trim();
+      const username = document.getElementById("username").value.trim();
+      const password = document.getElementById("password").value.trim();
+      const confirm = document.getElementById("confirm").value.trim();
+      const referral = document.getElementById("referral").value.trim();
+      const phone = document.getElementById("phone").value.trim();
 
-function createAccount(){
-  const name = name.value.trim();
-  const usernameVal = username.value.trim();
-  const pass = password.value.trim();
-  const confirmPass = confirm.value.trim();
-  const phoneVal = phone.value.trim();
-  const ref = referral.value.trim();
+      if(!name || !username || !password || password !== confirm){
+        alert("Details check karo");
+        return;
+      }
 
-  if(!name || !usernameVal || !pass || !confirmPass){
-    alert("Fill all required fields"); return;
-  }
-  if(pass !== confirmPass){
-    alert("Password not match"); return;
-  }
-
-  // username unique check
-  db.collection("users").where("username","==",usernameVal).get()
-  .then(snap=>{
-    if(!snap.empty){
-      alert("Username already taken");
-      return;
-    }
-
-    db.collection("users").add({
-      name,
-      username: usernameVal,
-      password: pass,
-      phone: phoneVal,
-      referral: ref || null,
-      wallet: 10,
-      createdAt: firebase.firestore.FieldValue.serverTimestamp()
-    }).then(()=>{
-      localStorage.setItem("username",usernameVal);
-      alert("Account Created Successfully");
-      location.href="dashboard.html";
-    });
-  });
-}
-
-function openHelp(){
-  alert(
-    "1. Sab details bharo\n"+
-    "2. OTP verify karo\n"+
-    "3. Referral optional hai\n"+
-    "4. Account ban jaayega"
-  );
+      db.collection("users").add({
+        name, username, password, phone,
+        referral: referral || null,
+        wallet: 0,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      }).then(()=>{
+        localStorage.setItem("username", username);
+        alert("Account Created Successfully");
+        location.href="dashboard.html";
+      });
+    })
+    .catch(()=>alert("Wrong OTP"));
 }
 </script>
 
