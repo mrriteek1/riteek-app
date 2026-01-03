@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Add Funds | RITEEK x OFFICIAL</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',sans-serif}
+body{background:#0f0f14;color:#fff}
+
+/* HEADER */
+.header{
+  background:linear-gradient(135deg,#ff0057,#7a00ff);
+  padding:16px;
+  border-radius:0 0 20px 20px;
+}
+.header-top{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.logo-circle{
+  width:42px;height:42px;border-radius:50%;
+  background:#000;overflow:hidden;
+}
+.logo-circle img{
+  width:100%;height:100%;object-fit:cover;
+}
+.logo-text{font-size:18px;font-weight:bold}
+
+/* CARD */
+.card{
+  background:#1c1c28;
+  margin:16px;
+  padding:16px;
+  border-radius:16px;
+}
+.timer{
+  text-align:center;
+  font-size:18px;
+  color:#ff0057;
+  font-weight:bold;
+  margin-bottom:10px;
+}
+input{
+  width:100%;
+  padding:12px;
+  border-radius:12px;
+  border:none;
+  margin-top:10px;
+  font-size:15px;
+}
+button{
+  margin-top:14px;
+  width:100%;
+  padding:14px;
+  border:none;
+  border-radius:14px;
+  background:#7a00ff;
+  color:#fff;
+  font-weight:bold;
+  cursor:pointer;
+}
+button:disabled{
+  opacity:.6;
+  cursor:not-allowed;
+}
+.note{
+  margin-top:10px;
+  font-size:12px;
+  opacity:.7;
+  text-align:center;
+}
+</style>
+</head>
+
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-top">
+    <div class="logo-circle">
+      <img src="logo.png">
+    </div>
+    <div class="logo-text">RITEEK x OFFICIAL</div>
+  </div>
+</div>
+
+<!-- ADD FUNDS CARD -->
+<div class="card">
+
+  <div class="timer">
+    Payment Time Left: <span id="time">10:00</span>
+  </div>
+
+  <p style="text-align:center">Scan & Pay</p>
+
+  <img src="qr.png"
+       style="width:220px;display:block;margin:10px auto;border-radius:12px">
+
+  <p style="text-align:center"><b>UPI:</b> 9693782712@ybl</p>
+
+  <input id="amount" type="number" placeholder="Enter Amount (₹)">
+  <input id="utr" placeholder="Enter UTR ID">
+
+  <button id="submitBtn" onclick="submitPayment()">Submit Payment</button>
+
+  <div class="note">
+    ⚠️ Payment submit 10 minutes ke andar karna zaroori hai
+  </div>
+
+</div>
+
+<script>
+/* ================= FIREBASE CONFIG ================= */
+const firebaseConfig = {
+  apiKey: "AIzaSyD9AuI0WpI8mT6GNd8ayvgAjnc4oPznbOI",
+  authDomain: "riteek-x-official.firebaseapp.com",
+  projectId: "riteek-x-official",
+  storageBucket: "riteek-x-official.appspot.com",
+  messagingSenderId: "1009762184094",
+  appId: "1:1009762184094:web:d0a01b58c8f51bfe50048f"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+/* ================= USER CHECK ================= */
+const user = localStorage.getItem("username");
+if(!user){
+  alert("Login required");
+  location.href="login.html";
+}
+
+/* ================= TIMER ================= */
+let sec = 600;
+const timerInterval = setInterval(()=>{
+  let m = Math.floor(sec/60);
+  let s = sec%60;
+  document.getElementById("time").innerText =
+    String(m).padStart(2,"0")+":"+String(s).padStart(2,"0");
+
+  if(sec <= 0){
+    clearInterval(timerInterval);
+    document.getElementById("submitBtn").disabled = true;
+    alert("Time expired. Please try again.");
+    location.href="dashboard.html";
+  }
+  sec--;
+},1000);
+
+/* ================= SUBMIT PAYMENT ================= */
+function submitPayment(){
+  const amt = Number(document.getElementById("amount").value);
+  const utr = document.getElementById("utr").value.trim();
+  const btn = document.getElementById("submitBtn");
+
+  if(!amt || amt <= 0){
+    alert("Enter valid amount");
+    return;
+  }
+  if(!utr || utr.length < 6){
+    alert("Enter valid UTR ID");
+    return;
+  }
+
+  btn.disabled = true;
+
+  db.collection("payments").add({
+    username: user,
+    amount: amt,
+    utr: utr,
+    status: "pending",
+    time: firebase.firestore.FieldValue.serverTimestamp()
+  }).then(()=>{
+    alert("Payment submitted. Admin approval pending.");
+    location.href="dashboard.html";
+  }).catch(err=>{
+    btn.disabled = false;
+    alert("Error, try again");
+    console.error(err);
+  });
+}
+</script>
+
+</body>
+</html>
